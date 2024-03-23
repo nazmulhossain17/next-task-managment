@@ -1,61 +1,62 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { createUser } from "../lib/actions/create-user";
+import toast from "react-hot-toast";
 
-export default function HomePage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+}
+const Register = () => {
+  const { register, handleSubmit } = useForm<FormData>();
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const signInData = await signIn("credentials", {
-      email: email,
-      password: password,
-      redirect: false,
-    });
-    if (signInData?.error) {
-      console.log(signInData.error);
-    } else {
-      router.refresh();
-      router.push("/dashboard");
+  const handleRegister = async (data: FormData) => {
+    console.log(data);
+    const res = await createUser(data);
+    console.log(res);
+    if (res.ok) {
+      console.log("Register successfully");
+      toast.success("Account created successful");
     }
-    console.log(signInData);
-    // Add your sign-in logic here
+    router.push("/");
   };
 
   return (
-    <main>
+    <>
       <div className="flex min-h-screen justify-center bg-gray-100 text-gray-900">
         <div className="m-0 flex max-w-screen-xl flex-1 justify-center bg-white shadow sm:m-10 sm:rounded-lg">
           <div className="p-6 sm:p-12 lg:w-1/2 xl:w-5/12">
             <div className="mt-12 flex flex-col items-center p-9">
               <h1 className="text-2xl font-extrabold xl:text-3xl">Sign up</h1>
-              <form className="mt-8 w-full flex-1" onSubmit={handleSubmit}>
+              <form
+                className="mt-8 w-full flex-1"
+                onSubmit={handleSubmit(handleRegister)}
+              >
                 <div className="mx-auto max-w-xs">
                   <input
                     className="w-full rounded-lg border border-gray-200 bg-gray-100 px-8 py-4 text-sm font-medium placeholder-gray-500 focus:border-gray-400 focus:bg-white focus:outline-none"
+                    type="text"
+                    placeholder="Name"
+                    {...register("name")}
+                  />
+                  <input
+                    className="mt-5 w-full rounded-lg border border-gray-200 bg-gray-100 px-8 py-4 text-sm font-medium placeholder-gray-500 focus:border-gray-400 focus:bg-white focus:outline-none"
                     type="email"
                     placeholder="Email"
-                    value={email}
-                    onChange={handleEmailChange}
+                    {...register("email")}
                   />
                   <input
                     className="mt-5 w-full rounded-lg border border-gray-200 bg-gray-100 px-8 py-4 text-sm font-medium placeholder-gray-500 focus:border-gray-400 focus:bg-white focus:outline-none"
                     type="password"
                     placeholder="Password"
-                    value={password}
-                    onChange={handlePasswordChange}
+                    {...register("password")}
                   />
                   <button
                     type="submit"
@@ -74,12 +75,15 @@ export default function HomePage() {
                       <circle cx="8.5" cy="7" r="4"></circle>
                       <path d="M20 8v6M23 11h-6"></path>
                     </svg>
-                    <span className="ml-3">Sign In</span>
+                    <span className="ml-3">
+                      {" "}
+                      {loading ? "Creating Account..." : "Sign up"}
+                    </span>
                   </button>
                   <p className="mt-6 text-center text-xs text-gray-600">
                     Don&apos;t have an account?{" "}
-                    <Link className="text-blue-600" href={"/register"}>
-                      sign up
+                    <Link className="text-blue-600" href={"/"}>
+                      sign in
                     </Link>
                   </p>
                 </div>
@@ -96,6 +100,8 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-    </main>
+    </>
   );
-}
+};
+
+export default Register;
